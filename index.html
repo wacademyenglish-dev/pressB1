@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WOLF LABS | Under Pressure</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&family=Outfit:wght@500;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        bgDark: '#0B0E14',       /* Obsidian Black */
+                        panelDark: '#1A202C',    /* Dark Slate */
+                        panelHover: '#2D3748',   
+                        textLight: '#F8FAFC',    /* Cloud White */
+                        textMuted: '#94A3B8',    
+                        accentOrange: '#FF5722', /* Neon Orange */
+                        accentCyan: '#00BCD4',   /* Focus Cyan */
+                        dangerRed: '#E53E3E'     /* Error Red */
+                    },
+                    fontFamily: {
+                        heading: ['Outfit', 'sans-serif'],
+                        body: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { background-color: #0B0E14; color: #F8FAFC; overflow: hidden; }
+        
+        /* Eye-Care Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0B0E14; }
+        ::-webkit-scrollbar-thumb { background: #2D3748; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #00BCD4; }
+
+        /* Animations */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-10px); }
+            40%, 80% { transform: translateX(10px); }
+        }
+        .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; border-color: #E53E3E !important; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        
+        @keyframes pulseOrange { 0%, 100% { box-shadow: inset 0 0 0 rgba(255, 87, 34, 0); } 50% { box-shadow: inset 0 0 80px rgba(255, 87, 34, 0.2); } }
+        .cooker-mode { animation: pulseOrange 1s infinite; border-color: rgba(255, 87, 34, 0.5) !important; }
+
+        /* UI Styling */
+        .glass-panel { background: rgba(26, 32, 44, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(0, 188, 212, 0.15); }
+        .glow-cyan { text-shadow: 0 0 15px rgba(0, 188, 212, 0.5); }
+        .glow-orange { text-shadow: 0 0 15px rgba(255, 87, 34, 0.5); }
+        
+        .drawer { position: fixed; top: 0; bottom: 80px; width: 340px; background: #1A202C; z-index: 100; transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 40px rgba(0,0,0,0.6); border: 1px solid rgba(0, 188, 212, 0.1); }
+        .drawer-left { left: 0; transform: translateX(-100%); border-left: none; }
+        .drawer-right { right: 0; transform: translateX(100%); border-right: none; }
+        .drawer.open { transform: translateX(0); }
+
+        /* Custom Input */
+        input[type=range].zen-slider { -webkit-appearance: none; width: 100%; background: transparent; }
+        input[type=range].zen-slider::-webkit-slider-runnable-track { width: 100%; height: 12px; cursor: pointer; background: #2D3748; border-radius: 10px; border: 1px solid rgba(0, 188, 212, 0.2); }
+        input[type=range].zen-slider::-webkit-slider-thumb { -webkit-appearance: none; height: 36px; width: 36px; border-radius: 50%; background: #0B0E14; border: 4px solid #00BCD4; cursor: pointer; margin-top: -12px; box-shadow: 0 0 15px rgba(0, 188, 212, 0.4); transition: transform 0.2s; }
+        input[type=range].zen-slider::-webkit-slider-thumb:hover { transform: scale(1.1); }
+        
+        #confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 200; }
+        
+        .btn-wolf { transition: all 0.2s ease; }
+        .btn-wolf:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0, 188, 212, 0.3); }
+        .btn-wolf:active { transform: translateY(0); }
+
+        /* Flip Card */
+        .flip-container { perspective: 1000px; cursor: pointer; }
+        .flip-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; }
+        .flip-container.flipped .flip-inner { transform: rotateY(180deg); }
+        .flip-front, .flip-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 1rem; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; }
+        .flip-front { background: #1A202C; border: 2px solid #2D3748; }
+        .flip-back { background: #0B0E14; border: 2px solid #00BCD4; transform: rotateY(180deg); }
+    </style>
+</head>
+<body class="font-body h-screen flex flex-col antialiased select-none">
+
+    <canvas id="confetti-canvas"></canvas>
+
+    <!-- Start Dashboard -->
+    <div id="dashboard" class="absolute inset-0 z-[150] flex flex-col items-center justify-center bg-bgDark">
+        <div class="absolute inset-0 opacity-10 bg-[radial-gradient(ellipse_at_center,_#00BCD4_0%,_transparent_60%)] pointer-events-none"></div>
+        <div class="max-w-4xl text-center space-y-8 fade-in px-6 relative z-10">
+            <div class="glass-panel p-6 mb-4 mt-10 inline-block border-t-4 border-accentCyan rounded-[2rem]">
+                <div class="w-24 h-24 bg-bgDark rounded-full flex items-center justify-center border-2 border-accentCyan shadow-[0_0_30px_rgba(0,188,212,0.2)_inset]">
+                    <i class="fa-solid fa-bolt text-5xl text-accentCyan glow-cyan"></i>
+                </div>
+            </div>
+            <div class="space-y-4">
+                <p class="text-accentOrange font-mono font-bold text-sm tracking-[0.4em] uppercase border border-accentOrange/20 px-5 py-2 rounded bg-accentOrange/5 inline-block glow-orange">Performance Lab</p>
+                <h1 class="text-5xl md:text-7xl font-heading font-black tracking-widest uppercase">UNDER <br><span class="text-accentCyan glow-cyan">PRESSURE</span></h1>
+                <p class="text-xl text-textMuted max-w-2xl mx-auto font-medium leading-relaxed font-body">Master your mind when it matters most. Learn to explain cause, effect, and purpose while surviving the Focus Zone.</p>
+            </div>
+            <button onclick="startGame()" class="mt-8 px-16 py-6 bg-accentCyan text-bgDark rounded-full font-heading font-black text-2xl tracking-widest uppercase hover:scale-105 transition-all shadow-xl shadow-accentCyan/20 flex items-center gap-4 mx-auto">
+                <i class="fa-solid fa-stopwatch"></i> ENTER THE ZONE
+            </button>
+        </div>
+    </div>
+
+    <!-- Top HUD -->
+    <header id="hud-top" class="h-20 glass-panel flex items-center justify-between px-8 z-50 shrink-0 border-b border-panelHover">
+        <div class="flex items-center gap-12">
+            <div class="flex flex-col gap-1">
+                <div class="flex justify-between items-end"><span class="text-[10px] font-bold text-textMuted uppercase tracking-widest font-mono">Composure (HP)</span><span id="txt-hp" class="text-[10px] font-mono text-dangerRed">100</span></div>
+                <div class="w-36 h-2 bg-bgDark rounded-full overflow-hidden border border-panelHover">
+                    <div id="bar-hp" class="h-full bg-dangerRed transition-all duration-300 shadow-[0_0_10px_#E53E3E]" style="width: 100%"></div>
+                </div>
+            </div>
+            <div class="flex flex-col gap-1">
+                <div class="flex justify-between items-end"><span class="text-[10px] font-bold text-textMuted uppercase tracking-widest font-mono">Focus (XP)</span><span id="txt-xp" class="text-[10px] font-mono text-accentCyan">0/240</span></div>
+                <div class="w-36 h-2 bg-bgDark rounded-full overflow-hidden border border-panelHover">
+                    <div id="bar-xp" class="h-full bg-accentCyan transition-all duration-300 shadow-[0_0_10px_#00BCD4]" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+        <div class="flex items-center gap-6">
+            <button onclick="toggleFullscreen()" class="w-10 h-10 flex items-center justify-center rounded-full bg-panelDark border border-panelHover text-textMuted hover:text-accentCyan transition-all"><i class="fa-solid fa-expand"></i></button>
+            <button onclick="toggleDrawer('teacher')" class="px-5 py-2 bg-accentCyan/10 text-accentCyan border border-accentCyan/40 rounded-xl text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-accentCyan hover:text-bgDark transition-all font-mono">
+                <i class="fa-solid fa-headset"></i> Coach
+            </button>
+            <div class="hidden lg:block text-right">
+                <p class="font-heading font-bold text-textLight leading-none tracking-widest">WOLF LABS</p>
+                <p class="text-[9px] text-accentOrange font-mono uppercase mt-1 tracking-widest glow-orange">B1 Module</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Arena -->
+    <main id="mission-arena" class="flex-1 relative overflow-y-auto p-6 flex flex-col items-center justify-center">
+        <div id="step-container" class="w-full max-w-4xl transition-all duration-400"></div>
+    </main>
+
+    <!-- Console -->
+    <footer id="nav-console" class="h-20 glass-panel flex items-center justify-between px-8 z-50 shrink-0 border-t border-panelHover">
+        <button onclick="toggleDrawer('nav')" class="flex flex-col items-center gap-1 text-textMuted hover:text-accentCyan transition-colors">
+            <i class="fa-solid fa-sitemap text-lg"></i>
+            <span class="text-[10px] font-mono font-bold tracking-widest">STAGES</span>
+        </button>
+        
+        <div class="flex items-center gap-6">
+            <button id="btn-prev" onclick="navStep(-1)" class="w-12 h-12 rounded-full border border-panelHover text-textMuted hover:text-accentCyan disabled:opacity-20 transition-all flex items-center justify-center">
+                <i class="fa-solid fa-backward-step"></i>
+            </button>
+            <div id="step-counter" class="font-mono font-bold text-accentCyan bg-bgDark px-8 py-2 rounded-full border border-panelHover shadow-inner">
+                1 / 25
+            </div>
+            <button id="btn-next" onclick="navStep(1)" class="w-12 h-12 rounded-full bg-accentCyan text-bgDark hover:scale-110 transition-all shadow-lg shadow-accentCyan/20 flex items-center justify-center">
+                <i class="fa-solid fa-forward-step"></i>
+            </button>
+        </div>
+
+        <button onclick="toggleDrawer('whiteboard')" class="flex flex-col items-center gap-1 text-textMuted hover:text-accentCyan transition-colors">
+            <i class="fa-solid fa-clipboard-check text-lg"></i>
+            <span class="text-[10px] font-mono font-bold tracking-widest">NOTES</span>
+        </button>
+    </footer>
+
+    <!-- Drawers -->
+    <div id="drawer-nav" class="drawer drawer-left p-8 overflow-y-auto">
+        <h2 class="font-heading font-bold text-2xl text-accentCyan mb-6 border-b border-panelHover pb-4">Focus Map</h2>
+        <div id="index-list" class="space-y-2"></div>
+    </div>
+    
+    <div id="drawer-whiteboard" class="drawer drawer-right p-8 flex flex-col">
+        <h2 class="font-heading font-bold text-2xl text-accentCyan mb-6 border-b border-panelHover pb-4">Performance Log</h2>
+        <textarea class="flex-1 bg-bgDark border border-panelHover rounded-2xl p-5 font-mono text-lg text-textLight focus:outline-none focus:border-accentCyan resize-none leading-relaxed" placeholder="Write your connectors here..."></textarea>
+    </div>
+
+    <div id="drawer-teacher" class="drawer drawer-right p-8">
+        <div class="flex justify-between items-center mb-6 border-b border-panelHover pb-4">
+            <h2 class="font-heading font-bold text-2xl text-accentCyan"><i class="fa-solid fa-headset mr-2"></i>Coach Radio</h2>
+            <button onclick="toggleDrawer('teacher')" class="text-textMuted hover:text-textLight"><i class="fa-solid fa-xmark text-xl"></i></button>
+        </div>
+        
+        <div class="bg-bgDark p-5 rounded-xl border border-panelHover shadow-inner mb-6">
+            <p class="text-[10px] font-mono text-accentOrange uppercase tracking-[0.3em] mb-2 glow-orange">Module Goal</p>
+            <p class="text-sm text-textMuted leading-relaxed font-body">Level B1. Students must fluently use Connectors of Cause (<strong class="text-textLight">due to</strong>), Effect (<strong class="text-textLight">lead to, result in</strong>), and Purpose (<strong class="text-accentCyan">in order to, so that</strong>) during high-pressure speaking tasks.</p>
+        </div>
+        
+        <div class="space-y-3">
+            <p class="text-[10px] font-mono text-textMuted uppercase tracking-widest mb-2">Send Feedback</p>
+            <button onclick="triggerPraise('PERFECT FLOW!', 'Great use of cause/effect.')" class="w-full py-4 bg-transparent text-accentCyan border border-accentCyan/50 rounded-xl font-bold text-xs hover:bg-accentCyan hover:text-bgDark transition-all uppercase tracking-widest font-heading shadow-[0_0_10px_rgba(0,188,212,0.1)]">SEND: CYAN (LOGIC)</button>
+            <button onclick="triggerPraise('CLUTCH!', 'Handled pressure perfectly.')" class="w-full py-4 bg-accentOrange/10 text-accentOrange border border-accentOrange/50 rounded-xl font-bold text-xs hover:bg-accentOrange hover:text-bgDark transition-all uppercase tracking-widest font-heading shadow-[0_0_10px_rgba(255,87,34,0.1)]">SEND: ORANGE (DEFUSED)</button>
+        </div>
+    </div>
+
+    <!-- Praise Overlay -->
+    <div id="praise-overlay" class="fixed inset-0 z-[6000] flex items-center justify-center bg-bgDark/95 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300 p-4">
+        <div id="praise-card" class="glass-panel p-20 rounded-[3rem] text-center transform scale-50 transition-transform duration-500 border-t-8 shadow-2xl">
+            <h2 id="praise-main" class="font-heading text-5xl md:text-7xl font-black tracking-tighter uppercase mb-4"></h2>
+            <p id="praise-sub" class="text-xl font-bold tracking-[0.3em] uppercase text-textLight font-mono"></p>
+        </div>
+    </div>
+
+    <script>
+        // --- GAME STATE ---
+        let state = { hp: 100, xp: 0, current: 0, maxSteps: 25 };
+        let cookerInterval;
+
+        // --- LESSON DATA (25 Steps) ---
+        const lessonData = [
+            // Phase 1: Warm Up
+            { type: 'bGuide', title: 'Entering the Zone', text: 'Why do experts suddenly fail when everyone is watching? Welcome to the psychology of performance. <br><br><strong>Focus:</strong> Debate ideas using Connectors of Cause, Effect, and Purpose.', icon: 'fa-crosshairs' },
+            { type: 'bSlider', title: 'Performance Check', text: 'How do you usually perform under intense pressure?', minLabel: 'I freeze (Choke)', maxLabel: 'I become a champion', followUp: 'Think of a specific moment (an exam, a game, a presentation). What happened?' },
+            { type: 'bDebateFlip', title: 'Ice Breaker', text: 'Click the cards to reveal the debate topics. Discuss them with your Coach.', cards: ['Have you ever "choked" (frozen) during a test or a game?', 'Do you think some people are naturally immune to stress?', 'Is talent more important than mental focus?'] },
+            
+            // Phase 2: Video Part 1
+            { type: 'bVideo', title: 'The Phenomenon', instruction: 'Watch the first part. Pay attention to the two theories: "Distraction Theory" and "Explicit Monitoring".', vid: 'CqgmozFr_GM', start: 0, end: 160 },
+            { type: 'bConsultQuiz', title: 'Listening Check', text: 'What is the "Distraction Theory"?', options: ['Focusing too much on body movements.', 'When the mind is filled with worries instead of the task.', 'When someone makes noises to distract you.'], correct: 1 },
+            { type: 'bConsultQuiz', title: 'Listening Check', text: 'What is "Explicit Monitoring"?', options: ['A camera recording you.', 'Forgetting what you studied.', 'Thinking too much about mechanics that should be automatic.'], correct: 2 },
+            
+            // Phase 3: Cause and Effect
+            { type: 'bGrammar', title: 'Connecting the Dots', ruleText: '<strong>CAUSE:</strong> Use <strong>due to</strong> or <strong>because of</strong> + Noun.<br><em>Example:</em> He failed the shot <strong>due to</strong> extreme stress.<br><br><strong>EFFECT:</strong> Use <strong>result in</strong> or <strong>lead to</strong> + Noun/Gerund.<br><em>Example:</em> Stress <strong>leads to</strong> forgetting the routine.', boxColor: 'accentCyan' },
+            { type: 'bTheoryMatch', title: 'Mind Map Builder', text: 'Connect the Cause to the Effect using the correct logic.', catA: 'CAUSE', catB: 'EFFECT', items: [{text: 'Overanalyzing mechanics', cat: 'A'}, {text: 'Failing the golf shot', cat: 'B'}, {text: 'Working memory overload', cat: 'A'}, {text: 'Poor math performance', cat: 'B'}] },
+            { type: 'bTuner', title: 'Syntax Switch', textA: 'Stress leads to fail.', textB: 'Stress leads to failing.', iconA: 'fa-triangle-exclamation text-dangerRed', iconB: 'fa-check text-accentCyan', hintA: 'ERROR. "Lead to" must be followed by a Noun or Gerund (ING).', hintB: 'CORRECT! "Failing" acts as a noun here.' },
+            
+            // Phase 4: Video Part 2 & Purpose
+            { type: 'bVideo', title: 'Hacking the Brain', instruction: 'Watch the solutions. How can we fix this problem?', vid: 'CqgmozFr_GM', start: 160, end: 240 },
+            { type: 'bGrammar', title: 'The Goal (Purpose)', ruleText: '<strong>PURPOSE (Why we do something):</strong><br><br>Use <strong>in order to</strong> or <strong>to</strong> + Infinitive Verb.<br><em>Example:</em> Take a deep breath <strong>in order to</strong> relax.<br><br>Use <strong>so that</strong> + Clause (Subject + Verb).<br><em>Example:</em> Create a routine <strong>so that</strong> your brain feels safe.', boxColor: 'accentOrange' },
+            { type: 'bTuner', title: 'Spot the Error', textA: 'I practice under pressure so that to win.', textB: 'I practice under pressure so that I can win.', iconA: 'fa-triangle-exclamation text-dangerRed', iconB: 'fa-check text-accentOrange', hintA: 'ERROR. "So that" needs a subject (I, you, he...).', hintB: 'CORRECT! So that + Subject + Verb.' },
+            { type: 'bTheoryMatch', title: 'Solution Map', text: 'Match the Action to its Purpose.', catA: 'ACTION', catB: 'PURPOSE (To...)', items: [{text: 'Practice under stress', cat: 'A'}, {text: 'Get accustomed to pressure', cat: 'B'}, {text: 'Use a pre-performance routine', cat: 'A'}, {text: 'Create a consistent result', cat: 'B'}] },
+
+            // Phase 5: The Pressure Cooker (Speaking)
+            { type: 'bGuide', title: 'Warning: Pressure Spike', text: 'The environment is changing. You will face high-pressure scenarios. You have 45 seconds to speak to your Coach and explain your strategy using Connectors.', icon: 'fa-fire-flame-curved' },
+            { type: 'bPressureCooker', scenario: 'SCENARIO 1: You are presenting a project for 1 Million Dollars. Suddenly, your mind goes completely blank.', question: 'Speak! What will you do IN ORDER TO recover? Why do people choke (DUE TO)?', time: 45 },
+            { type: 'bPressureCooker', scenario: 'SCENARIO 2: You have the final penalty kick. The crowd is screaming at you.', question: 'Speak! Explain the cause (LEADS TO) of missing, and what your routine is SO THAT you score.', time: 45 },
+            { type: 'bPressureCooker', scenario: 'SCENARIO 3: A live TV interview in English. You forget the word you wanted to say.', question: 'Speak! What is your strategy IN ORDER TO keep the conversation flowing naturally?', time: 45 },
+
+            // Phase 6: Output Roleplay (Heavy Conversation)
+            { type: 'bGuide', title: 'The Sports Psychologist', text: 'Now YOU are the expert. We will do 5 intense conversational rounds. Your teacher will challenge you.', icon: 'fa-user-tie' },
+            { type: 'bDebateFlip', title: 'Coaching Session', text: 'Click to reveal your client\'s problem. Advise them using Connectors of Purpose!', cards: ['CLIENT 1: "I am a pianist. Every time I look at my hands during a concert, I freeze." (Use Explicit Monitoring)', 'CLIENT 2: "I have a math test, but I can only think about failing." (Use Distraction Theory)'] },
+            { type: 'bDebateFlip', title: 'Advanced Coaching', text: 'More clients have arrived. Advise them using Cause and Effect connectors.', cards: ['CLIENT 3: "I freeze when my boss looks at me while I work." (Explain what this leads to)', 'CLIENT 4: "I overthink every single grammar rule when I speak English." (Explain the cause)'] },
+            { type: 'bRoleplay', title: 'Emergency Call', text: 'Your Coach (the teacher) is panicking before a big meeting. Calm them down!', cards: ['Tell your Coach 2 things they must do IN ORDER TO relax.', 'Explain what their panic will LEAD TO if they do not stop.'] },
+            { type: 'bRoleplay', title: 'Your Own Story', text: 'Let\'s talk about your real life. Answer the questions on the cards.', cards: ['Tell a story about a time you performed perfectly under pressure. What led to that success?', 'What is a specific routine you can create SO THAT you speak English more confidently?'] },
+            { type: 'bRoleplay', title: 'The Final Debate', text: 'Discuss this famous sports quote with your Coach.', cards: ['"Pressure is a privilege. It means things are expected of you." - Billie Jean King', 'Do you agree that stress can lead to better performance?'] },
+
+            // Phase 7: Wrap up
+            { type: 'bSlider', title: 'Final Thoughts', text: 'After this lesson, do you feel more prepared to handle pressure?', minLabel: 'I still freeze', maxLabel: 'I am ready for anything', followUp: 'What is the most important lesson you take away from this class?' },
+            { type: 'bGuide', title: 'Champion Status', text: 'You survived the Pressure Cooker and mastered advanced connectors! <br><br><strong>XP Earned:</strong> ' + 240 + '<br><br>Keep your focus and proceed to the Homework module.', icon: 'fa-trophy', isFinal: true }
+        ];
+
+        // --- TEMPLATE GENERATORS ---
+        const Templates = {
+            bGuide: (d) => `
+                <div class="flex flex-col items-center text-center fade-in space-y-6">
+                    <div class="w-28 h-28 rounded-full bg-panelDark flex items-center justify-center border-4 border-accentCyan shadow-[0_0_40px_rgba(0,188,212,0.2)]">
+                        <i class="fa-solid ${d.icon} text-6xl text-accentCyan glow-cyan"></i>
+                    </div>
+                    <h2 class="font-heading text-4xl md:text-5xl font-bold text-textLight mt-4 uppercase tracking-widest">${d.title}</h2>
+                    <p class="text-xl text-textMuted max-w-2xl leading-relaxed bg-panelDark p-8 rounded-2xl border border-panelHover mt-6">${d.text}</p>
+                    ${d.isFinal ? '' : `<button onclick="navStep(1)" class="mt-10 btn-wolf bg-accentCyan text-bgDark font-bold py-4 px-12 rounded-full text-lg tracking-widest uppercase font-heading">ACKNOWLEDGE</button>`}
+                </div>`,
+            
+            bSlider: (d, i) => `
+                <div class="flex flex-col items-center w-full fade-in space-y-10">
+                    <h2 class="font-heading text-3xl md:text-4xl font-bold text-accentCyan uppercase tracking-widest">${d.title}</h2>
+                    <p class="text-xl text-textLight text-center">${d.text}</p>
+                    
+                    <div class="w-full max-w-2xl bg-panelDark p-10 rounded-3xl border border-panelHover shadow-2xl relative mt-8">
+                        <input type="range" min="1" max="10" value="5" class="zen-slider relative z-10" id="slider-${i}">
+                        <div class="flex justify-between text-sm text-textMuted mt-8 font-mono font-bold uppercase tracking-widest">
+                            <span class="text-dangerRed">${d.minLabel}</span><span class="text-accentCyan">${d.maxLabel}</span>
+                        </div>
+                    </div>
+                    
+                    <div id="slider-followup-${i}" class="hidden w-full max-w-2xl bg-bgDark border-l-4 border-accentCyan p-8 rounded-r-xl shadow-inner fade-in text-left mt-6">
+                        <p class="text-[10px] text-accentCyan font-mono font-bold uppercase tracking-widest mb-3 glow-cyan"><i class="fa-solid fa-headset mr-2"></i> Coach Inquiry</p>
+                        <p class="text-xl text-textLight font-medium leading-relaxed">${d.followUp}</p>
+                    </div>
+
+                    <button id="slider-btn-${i}" onclick="revealSliderFollowUp(${i})" class="btn-wolf bg-transparent border-2 border-accentCyan text-accentCyan hover:bg-accentCyan hover:text-bgDark font-bold py-4 px-12 rounded-full text-lg tracking-widest uppercase transition-all shadow-[0_0_15px_rgba(0,188,212,0.2)] mt-8 font-heading">LOCK IN ANSWER</button>
+                </div>`,
+
+            bDebateFlip: (d, i) => `
+                <div class="flex flex-col items-center w-full max-w-4xl mx-auto fade-in h-full">
+                    <p class="text-[10px] font-bold text-accentOrange uppercase tracking-[0.4em] mb-4 bg-accentOrange/10 border border-accentOrange/30 px-4 py-1.5 rounded-full font-mono glow-orange">Speaking Challenge</p>
+                    <h2 class="font-heading text-3xl font-bold text-textLight mb-4 tracking-widest uppercase">${d.title}</h2>
+                    <p class="text-textMuted text-lg mb-10 text-center">${d.text}</p>
+                    
+                    <div class="grid md:grid-cols-2 gap-8 w-full">
+                        ${d.cards.map((card, idx) => `
+                            <div class="flip-container h-64 w-full" onclick="this.classList.toggle('flipped')">
+                                <div class="flip-inner">
+                                    <div class="flip-front shadow-lg">
+                                        <i class="fa-solid fa-comments text-4xl text-textMuted mb-4"></i>
+                                        <p class="font-mono text-accentCyan font-bold tracking-widest uppercase">Card ${idx + 1}</p>
+                                        <p class="text-xs text-textMuted mt-4 opacity-50">Click to reveal</p>
+                                    </div>
+                                    <div class="flip-back shadow-[0_0_20px_rgba(0,188,212,0.2)]">
+                                        <p class="text-xl font-body font-medium text-textLight leading-relaxed">"${card}"</p>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    <button onclick="navStep(1)" class="mt-12 btn-wolf bg-accentCyan text-bgDark font-bold py-4 px-12 rounded-full tracking-widest uppercase font-heading shadow-[0_0_15px_rgba(0,188,212,0.3)]">DEBATE FINISHED</button>
+                </div>`,
+
+            bVideo: (d) => `
+                <div class="max-w-4xl mx-auto w-full flex flex-col items-center fade-in h-full justify-center">
+                    <p class="text-[10px] font-bold text-bgDark uppercase tracking-[0.4em] mb-4 bg-accentCyan px-4 py-1.5 rounded-full font-mono shadow-[0_0_15px_rgba(0,188,212,0.4)]"><i class="fa-solid fa-play mr-2"></i> Visual Data</p>
+                    <h2 class="font-heading text-3xl md:text-4xl font-bold text-textLight mb-6 text-center tracking-widest uppercase">${d.title}</h2>
+                    <p class="text-textMuted text-lg mb-10 text-center">${d.instruction}</p>
+                    
+                    <div class="w-full bg-panelDark p-4 rounded-2xl border border-panelHover shadow-2xl">
+                        <div class="aspect-video w-full rounded-xl overflow-hidden bg-black border border-bgDark">
+                            <iframe class="w-full h-full" src="https://www.youtube.com/embed/${d.vid}?start=${d.start}&end=${d.end}&rel=0" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+                        </div>
+                    </div>
+                    <button onclick="navStep(1)" class="mt-10 btn-wolf border border-textLight text-textLight hover:bg-textLight hover:text-bgDark font-bold py-3 px-10 rounded-full tracking-widest uppercase font-heading">DATA PROCESSED</button>
+                </div>`,
+
+            bConsultQuiz: (d, i) => `
+                <div class="flex flex-col items-center justify-center w-full max-w-2xl mx-auto fade-in h-full" id="quiz-${i}">
+                    <h2 class="font-heading text-3xl font-bold text-textLight mb-10 text-center leading-tight tracking-wide">${d.text}</h2>
+                    <div class="w-full flex flex-col gap-5">
+                        ${d.options.map((opt, idx) => `
+                            <button onclick="checkMCQ(this, ${idx}, ${d.correct})" class="w-full bg-panelDark border-2 border-panelHover hover:border-accentCyan text-left p-6 rounded-2xl text-xl text-textLight transition-all shadow-sm">
+                                <span class="font-mono text-textMuted mr-4 opacity-50">${String.fromCharCode(65+idx)}.</span> ${opt}
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>`,
+
+            bGrammar: (d) => `
+                <div class="flex flex-col items-center justify-center w-full max-w-3xl mx-auto fade-in h-full">
+                    <p class="text-[10px] font-bold text-bgDark uppercase tracking-[0.4em] mb-4 bg-${d.boxColor} px-4 py-1.5 rounded-full font-mono shadow-[0_0_10px_currentColor]">Syntax Rules</p>
+                    <h2 class="font-heading text-4xl font-bold text-textLight mb-10 tracking-widest uppercase">${d.title}</h2>
+                    <div class="bg-panelDark border-l-8 border-${d.boxColor} p-10 rounded-r-2xl shadow-2xl w-full">
+                        <p class="text-xl text-textLight leading-loose">${d.ruleText}</p>
+                    </div>
+                    <button onclick="navStep(1)" class="mt-12 btn-wolf border-2 border-textLight text-textLight hover:bg-textLight hover:text-bgDark font-bold py-3 px-12 rounded-full tracking-widest uppercase font-heading">RULE LOGGED</button>
+                </div>`,
+
+            bTuner: (d, i) => `
+                <div class="flex flex-col items-center justify-center w-full fade-in h-full">
+                    <h2 class="font-heading text-4xl font-bold text-textLight mb-14 tracking-widest uppercase">${d.title}</h2>
+                    <div class="relative w-full max-w-3xl bg-panelDark rounded-3xl border border-panelHover p-16 text-center cursor-pointer select-none transition-all duration-300 shadow-2xl" onclick="toggleTuner(${i})" id="tuner-box-${i}">
+                        <div id="tuner-icon-${i}" class="text-7xl mb-8"><i class="fa-solid ${d.iconA}"></i></div>
+                        <h3 id="tuner-text-${i}" class="text-3xl font-body font-bold text-textLight mb-6">${d.textA}</h3>
+                        <p id="tuner-hint-${i}" class="text-textMuted font-mono text-sm tracking-widest uppercase">${d.hintA}</p>
+                        
+                        <div class="absolute -bottom-5 left-1/2 -translate-x-1/2 bg-textLight text-bgDark px-6 py-2 rounded-full text-xs font-bold tracking-widest uppercase flex items-center gap-2 shadow-lg font-heading">
+                            <i class="fa-solid fa-arrows-rotate"></i> TAP TO SWITCH
+                        </div>
+                    </div>
+                    <button id="tuner-next-${i}" onclick="navStep(1)" class="mt-16 btn-wolf bg-accentCyan text-bgDark font-bold py-4 px-16 rounded-full opacity-0 pointer-events-none transition-opacity duration-500 tracking-widest uppercase font-heading">CONFIRM</button>
+                </div>`,
+
+            bTheoryMatch: (d, i) => `
+                <div class="flex flex-col items-center justify-center w-full max-w-5xl mx-auto fade-in h-full" id="match-${i}">
+                    <p class="text-[10px] font-bold text-accentCyan uppercase tracking-[0.4em] mb-4 bg-accentCyan/10 border border-accentCyan/30 px-4 py-1.5 rounded-full font-mono glow-cyan">Mind Map Builder</p>
+                    <h2 class="font-heading text-4xl font-bold text-textLight mb-4 text-center tracking-widest uppercase">${d.title}</h2>
+                    <p class="text-textMuted text-center mb-12 text-lg">${d.text}</p>
+                    
+                    <div class="grid grid-cols-2 gap-10 mb-12 w-full">
+                        <div class="bg-bgDark border border-panelHover rounded-3xl p-6 min-h-[200px] relative" id="catA-${i}">
+                            <div class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-panelHover text-textLight font-bold font-mono px-6 py-2 rounded-full whitespace-nowrap tracking-widest">${d.catA}</div>
+                            <div class="flex flex-col gap-3 mt-6 drop-area h-full" data-cat="A"></div>
+                        </div>
+                        <div class="bg-bgDark border border-panelHover rounded-3xl p-6 min-h-[200px] relative" id="catB-${i}">
+                            <div class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-panelHover text-textLight font-bold font-mono px-6 py-2 rounded-full whitespace-nowrap tracking-widest">${d.catB}</div>
+                            <div class="flex flex-col gap-3 mt-6 drop-area h-full" data-cat="B"></div>
+                        </div>
+                    </div>
+                    
+                    <div id="match-items-${i}" class="flex flex-wrap justify-center gap-4">
+                        ${[...d.items].sort(()=>Math.random()-0.5).map((item, idx) => `
+                            <button onclick="selectMatchItem(this)" class="match-item bg-panelDark border-2 border-accentCyan text-textLight px-6 py-3 rounded-xl hover:bg-accentCyan hover:text-bgDark transition-all font-body text-sm shadow-sm" data-truecat="${item.cat}">${item.text}</button>
+                        `).join('')}
+                    </div>
+                    
+                    <div class="flex justify-center mt-12">
+                        <button onclick="checkMatchMaker(${i}, ${d.items.length})" class="btn-wolf bg-textLight text-bgDark font-bold py-4 px-16 rounded-full tracking-widest uppercase font-heading">VERIFY CONNECTION</button>
+                    </div>
+                </div>`,
+
+            bPressureCooker: (d, i) => `
+                <div class="flex flex-col items-center justify-center w-full max-w-4xl mx-auto fade-in h-full cooker-mode bg-[#1A1110] border-4 border-accentOrange rounded-3xl p-10 relative overflow-hidden" id="cooker-${i}">
+                    <div class="absolute top-0 left-0 w-full h-2 bg-accentOrange"></div>
+                    <p class="text-accentOrange font-mono text-sm tracking-[0.4em] mb-4 uppercase glow-orange"><i class="fa-solid fa-fire mr-2"></i> PRESSURE SPIKE</p>
+                    
+                    <div id="cooker-timer-${i}" class="text-7xl md:text-9xl font-mono font-black text-textLight mb-8 drop-shadow-[0_0_20px_rgba(255,87,34,0.8)]">${d.time}.0s</div>
+                    
+                    <h2 class="font-body text-2xl font-medium text-textLight leading-relaxed mb-8 italic text-center">"${d.scenario}"</h2>
+                    <p class="text-accentCyan font-heading text-xl font-bold bg-bgDark inline-block px-8 py-3 rounded-xl border border-panelHover tracking-widest text-center">${d.question}</p>
+                    
+                    <p class="text-textMuted mt-12 mb-4 font-mono text-sm uppercase tracking-widest">Teacher Control:</p>
+                    <button onclick="defuseCooker(${i})" class="w-full max-w-md bg-transparent border-2 border-accentOrange text-accentOrange hover:bg-accentOrange hover:text-bgDark font-bold py-5 rounded-2xl transition-all shadow-[0_0_20px_rgba(255,87,34,0.4)] text-2xl font-heading tracking-widest">DEFUSE TENSION</button>
+                </div>`,
+
+            bRoleplay: (d) => `
+                <div class="flex flex-col items-center justify-center w-full max-w-4xl mx-auto fade-in h-full">
+                    <p class="text-[10px] font-bold text-accentOrange uppercase tracking-[0.4em] mb-4 bg-accentOrange/10 border border-accentOrange/30 px-4 py-1.5 rounded-full font-mono glow-orange">Speaking Challenge</p>
+                    <h2 class="font-heading text-4xl font-bold text-textLight mb-4 tracking-widest uppercase"><i class="fa-solid fa-comments text-accentCyan mr-4"></i>${d.title}</h2>
+                    <p class="text-textMuted text-xl text-center mb-12">${d.text}</p>
+                    
+                    <div class="grid md:grid-cols-2 gap-6 w-full">
+                        ${d.cards.map((card, idx) => `
+                            <div onclick="this.querySelector('.cover').style.opacity=0; this.querySelector('.cover').style.pointerEvents='none';" class="relative bg-panelDark border border-panelHover hover:border-accentCyan transition-colors rounded-2xl p-8 text-center cursor-pointer min-h-[140px] flex items-center justify-center overflow-hidden group shadow-md">
+                                <p class="text-2xl text-textLight font-body font-medium leading-relaxed italic">"${card}"</p>
+                                <div class="cover absolute inset-0 bg-bgDark flex items-center justify-center transition-opacity duration-400">
+                                    <span class="text-accentCyan font-mono font-bold tracking-[0.2em] uppercase bg-accentCyan/10 px-6 py-2 rounded-full border border-accentCyan/30"><i class="fa-solid fa-eye mr-2"></i>Reveal Discussion Card</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <button onclick="navStep(1)" class="mt-14 btn-wolf border border-textLight text-textLight hover:bg-textLight hover:text-bgDark font-bold py-4 px-12 rounded-full tracking-widest uppercase font-heading">END DISCUSSION</button>
+                </div>`
+        };
+
+        // --- CORE LOGIC ---
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => console.log(err));
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen();
+            }
+        }
+
+        function startGame() {
+            document.getElementById('dashboard').classList.add('hidden');
+            buildIndex();
+            updateHUD();
+            renderStep();
+        }
+
+        function buildIndex() {
+            const list = document.getElementById('index-list');
+            list.innerHTML = lessonData.map((d, i) => `<button onclick="jumpTo(${i})" class="text-left px-3 py-2 rounded hover:bg-panelHover transition-colors ${i===0?'text-accentCyan font-bold':''}"><span class="font-mono mr-2 opacity-50">${i+1}.</span> ${d.title}</button>`).join('');
+        }
+
+        function updateHUD() {
+            document.getElementById('bar-hp').style.width = `${Math.max(0, state.hp)}%`;
+            document.getElementById('txt-hp').innerText = Math.max(0, state.hp);
+            
+            document.getElementById('bar-xp').style.width = `${(state.xp/240)*100}%`;
+            document.getElementById('txt-xp').innerText = `${state.xp}/240`;
+            
+            document.getElementById('step-counter').innerText = `${state.current + 1} / ${state.maxSteps}`;
+            
+            document.getElementById('btn-prev').disabled = state.current === 0;
+            document.getElementById('btn-next').disabled = state.current === state.maxSteps - 1;
+
+            const items = document.getElementById('index-list').children;
+            if(items.length > 0) {
+                for(let i=0; i<items.length; i++) {
+                    items[i].className = `text-left px-4 py-3 rounded-lg hover:bg-panelHover transition-colors ${i === state.current ? 'text-accentCyan font-bold bg-panelDark border-l-2 border-accentCyan shadow-sm' : 'text-textMuted'}`;
+                }
+            }
+        }
+
+        function renderStep() {
+            if (cookerInterval) clearInterval(cookerInterval);
+            
+            const container = document.getElementById('step-container');
+            container.style.opacity = 0;
+            
+            setTimeout(() => {
+                const stepData = lessonData[state.current];
+                container.innerHTML = Templates[stepData.type](stepData, state.current);
+                container.style.opacity = 1;
+
+                if (stepData.type === 'bPressureCooker') {
+                    startCooker(state.current);
+                }
+            }, 200);
+            updateHUD();
+        }
+
+        function navStep(dir) {
+            let newCurrent = state.current + dir;
+            if (newCurrent >= 0 && newCurrent < state.maxSteps) {
+                state.current = newCurrent;
+                renderStep();
+            }
+        }
+
+        function jumpTo(index) {
+            state.current = index;
+            renderStep();
+            document.getElementById('drawer-nav').classList.remove('open');
+        }
+
+        function toggleDrawer(id) {
+            const el = document.getElementById(`drawer-${id}`);
+            if (id === 'whiteboard') {
+                const td = document.getElementById('drawer-teacher');
+                if (td) td.classList.remove('open');
+            }
+            if (id === 'teacher') {
+                const wd = document.getElementById('drawer-whiteboard');
+                if (wd) wd.classList.remove('open');
+            }
+            el.classList.toggle('open');
+        }
+
+        function triggerPraise(main, sub) {
+            document.getElementById('drawer-teacher').classList.remove('open');
+            const overlay = document.getElementById('praise-overlay'); 
+            const card = document.getElementById('praise-card');
+            
+            if(main === 'PERFECT FLOW!') {
+                card.className = "glass-panel p-16 md:p-24 rounded-[3rem] text-center transform scale-50 transition-transform duration-500 border-t-8 border-accentCyan shadow-[0_0_50px_rgba(0,188,212,0.15)] bg-panelDark";
+                document.getElementById('praise-main').className = "font-heading text-5xl md:text-7xl font-black tracking-tighter uppercase mb-4 text-accentCyan glow-cyan";
+            } else {
+                card.className = "glass-panel p-16 md:p-24 rounded-[3rem] text-center transform scale-50 transition-transform duration-500 border-t-8 border-accentOrange shadow-[0_0_50px_rgba(255,87,34,0.15)] bg-panelDark";
+                document.getElementById('praise-main').className = "font-heading text-5xl md:text-7xl font-black tracking-tighter uppercase mb-4 text-accentOrange glow-orange";
+            }
+            
+            document.getElementById('praise-main').innerText = main; 
+            document.getElementById('praise-sub').innerText = sub;
+            
+            overlay.classList.remove('opacity-0', 'pointer-events-none');
+            setTimeout(() => card.classList.replace('scale-50', 'scale-100'), 50); 
+            shootConfetti();
+            
+            setTimeout(() => { 
+                card.classList.replace('scale-100', 'scale-50'); 
+                overlay.classList.add('opacity-0', 'pointer-events-none'); 
+            }, 2500);
+        }
+
+        function applyDamage(elId, amount = 10) {
+            const el = document.getElementById(elId);
+            state.hp -= amount;
+            if(state.hp < 0) state.hp = 0;
+            if(el) {
+                el.classList.remove('shake');
+                void el.offsetWidth;
+                el.classList.add('shake');
+            }
+            updateHUD();
+        }
+
+        function rewardSuccess() {
+            state.xp += 10;
+            updateHUD();
+            shootConfetti();
+            setTimeout(() => navStep(1), 1200);
+        }
+
+        // --- NEW MINI GAME LOGIC: Pressure Cooker ---
+        function startCooker(index) {
+            const data = lessonData[index];
+            const timeEl = document.getElementById(`cooker-timer-${index}`);
+            let timeLeft = data.time;
+
+            cookerInterval = setInterval(() => {
+                timeLeft -= 0.1;
+                if(timeLeft <= 0) {
+                    timeLeft = 0;
+                    clearInterval(cookerInterval);
+                    handleCookerFail(index);
+                }
+                timeEl.innerText = timeLeft.toFixed(1) + 's';
+                
+                // Increase urgency visually
+                if(timeLeft < 10) {
+                    timeEl.classList.add('text-dangerRed');
+                    timeEl.classList.remove('text-accentOrange');
+                }
+            }, 100);
+        }
+
+        function defuseCooker(index) {
+            clearInterval(cookerInterval);
+            const container = document.getElementById(`cooker-${index}`);
+            container.classList.remove('cooker-mode', 'border-accentOrange');
+            container.classList.add('border-accentCyan');
+            container.innerHTML = `
+                <div class="text-center fade-in py-10">
+                    <i class="fa-solid fa-shield-check text-7xl text-accentCyan mb-6 glow-cyan"></i>
+                    <h2 class="text-4xl font-heading font-black text-textLight mb-2 tracking-widest uppercase">DEFUSED</h2>
+                    <p class="text-accentCyan font-mono tracking-widest">Pressure Handled Successfully</p>
+                </div>
+            `;
+            rewardSuccess();
+        }
+
+        function handleCookerFail(index) {
+            const container = document.getElementById(`cooker-${index}`);
+            container.classList.remove('cooker-mode', 'border-accentOrange');
+            container.classList.add('border-dangerRed');
+            container.innerHTML = `
+                <div class="text-center fade-in py-10">
+                    <i class="fa-solid fa-triangle-exclamation text-7xl text-dangerRed mb-6"></i>
+                    <h2 class="text-4xl font-heading font-black text-textLight mb-2 tracking-widest uppercase">CHOKED</h2>
+                    <p class="text-dangerRed font-mono tracking-widest">Time Expired</p>
+                </div>
+            `;
+            applyDamage(`cooker-${index}`, 20);
+            setTimeout(() => navStep(1), 3000);
+        }
+
+        // --- OLDER LOGIC ---
+        function revealSliderFollowUp(i) {
+            const btn = document.getElementById(`slider-btn-${i}`);
+            const fb = document.getElementById(`slider-followup-${i}`);
+            
+            if (btn.innerText === 'LOCK IN ANSWER') {
+                fb.classList.remove('hidden');
+                btn.innerText = 'CONTINUE';
+                btn.classList.replace('border-accentCyan', 'border-accentOrange');
+                btn.classList.replace('text-accentCyan', 'text-accentOrange');
+                btn.classList.replace('hover:bg-accentCyan', 'hover:bg-accentOrange');
+                btn.classList.replace('shadow-[0_0_15px_rgba(0,188,212,0.2)]', 'shadow-[0_0_15px_rgba(255,87,34,0.3)]');
+            } else {
+                navStep(1);
+            }
+        }
+
+        function checkMCQ(btn, selected, correct) {
+            const parent = btn.parentElement;
+            Array.from(parent.children).forEach(b => b.disabled = true);
+            
+            if (selected === correct) {
+                btn.classList.add('bg-accentCyan', 'border-accentCyan', 'text-bgDark');
+                btn.classList.replace('text-textLight', 'text-bgDark');
+                rewardSuccess();
+            } else {
+                btn.classList.add('bg-dangerRed', 'border-dangerRed', 'text-textLight');
+                parent.children[correct].classList.add('border-accentCyan', 'text-accentCyan'); 
+                applyDamage(`quiz-${state.current}`);
+                setTimeout(() => navStep(1), 2000); 
+            }
+        }
+
+        let tunerState = {};
+        function toggleTuner(i) {
+            const d = lessonData[i];
+            const isB = tunerState[i];
+            
+            document.getElementById(`tuner-text-${i}`).innerText = isB ? d.textA : d.textB;
+            document.getElementById(`tuner-hint-${i}`).innerText = isB ? d.hintA : d.hintB;
+            document.getElementById(`tuner-icon-${i}`).innerHTML = `<i class="fa-solid ${isB ? d.iconA : d.iconB}"></i>`;
+            
+            tunerState[i] = !isB;
+            document.getElementById(`tuner-next-${i}`).classList.remove('opacity-0', 'pointer-events-none');
+        }
+
+        let selectedMatchItem = null;
+        function selectMatchItem(el) {
+            if(selectedMatchItem) selectedMatchItem.classList.remove('bg-accentCyan', 'text-bgDark');
+            selectedMatchItem = el;
+            el.classList.add('bg-accentCyan', 'text-bgDark');
+        }
+        
+        document.addEventListener('click', function(e) {
+            const dropArea = e.target.closest('.drop-area');
+            if(dropArea && selectedMatchItem) {
+                dropArea.appendChild(selectedMatchItem);
+                selectedMatchItem.classList.remove('bg-accentCyan', 'text-bgDark');
+                selectedMatchItem.setAttribute('data-currentcat', dropArea.getAttribute('data-cat'));
+                selectedMatchItem = null;
+            }
+        });
+
+        function checkMatchMaker(i, total) {
+            const items = document.getElementById(`match-${i}`).querySelectorAll('.match-item');
+            let placed = 0;
+            let correct = 0;
+            
+            items.forEach(item => {
+                if(item.hasAttribute('data-currentcat')) {
+                    placed++;
+                    if(item.getAttribute('data-currentcat') === item.getAttribute('data-truecat')) correct++;
+                }
+            });
+
+            if(placed < total) { alert("Place all items first!"); return; }
+
+            if(correct === total) { rewardSuccess(); } 
+            else { applyDamage(`match-${i}`); }
+        }
+
+        // --- CONFETTI ENGINE ---
+        const canvas = document.getElementById('confetti-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        let particles = [];
+
+        window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
+
+        function shootConfetti() {
+            const colors = ['#00BCD4', '#FF5722', '#F8FAFC', '#94A3B8'];
+            for (let i = 0; i < 100; i++) {
+                particles.push({
+                    x: canvas.width / 2, y: canvas.height / 2,
+                    r: Math.random() * 6 + 2,
+                    dx: Math.random() * 20 - 10, dy: Math.random() * -20 - 5,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    tilt: Math.floor(Math.random() * 10) - 10,
+                    tiltAngle: 0, tiltAngleInc: (Math.random() * 0.07) + 0.05
+                });
+            }
+        }
+
+        function animateConfetti() {
+            requestAnimationFrame(animateConfetti);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach((p, index) => {
+                p.tiltAngle += p.tiltAngleInc;
+                p.y += (Math.cos(p.tiltAngle) + 1 + p.r / 2) / 2;
+                p.x += Math.sin(p.tiltAngle) * 2;
+                p.dy += 0.5;
+                p.y += p.dy;
+                p.x += p.dx;
+                
+                ctx.beginPath();
+                ctx.lineWidth = p.r;
+                ctx.strokeStyle = p.color;
+                ctx.moveTo(p.x + p.tilt + p.r, p.y);
+                ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r);
+                ctx.stroke();
+
+                if (p.y > canvas.height) particles.splice(index, 1);
+            });
+        }
+        animateConfetti();
+
+    </script>
+</body>
+</html>
